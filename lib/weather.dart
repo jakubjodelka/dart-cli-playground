@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:cli_util/cli_logging.dart';
+import 'package:dart_cli_playground/commands/export.dart';
 import 'package:dart_cli_playground/commands/today.dart';
 import 'package:dart_cli_playground/commands/week.dart';
 import 'package:dart_cli_playground/utils/logger.dart' show logger;
@@ -23,6 +24,7 @@ Future<void> weatherRunner(List<String> args) async {
 
   runner..addCommand(TodayCommand());
   runner..addCommand(WeekCommand());
+  runner..addCommand(ExportCommand());
 
   return await runner.run(args).catchError((exc, st) {
     if (exc is String) {
