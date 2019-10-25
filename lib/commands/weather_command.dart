@@ -7,21 +7,14 @@ abstract class WeatherCommand extends Command {
   String progressMessage;
 
   void run() async {
-    if (argResults.arguments.isEmpty)
+    if (argResults.arguments.isEmpty) {
       throw Exception("City parameter is required");
+    }
 
     final city = argResults.arguments[0];
-
     final progress = logger.progress(green.wrap(progressMessage + " $city"));
-
-    try {
-      var weather = await getWeatherForCity(city);
-      logger.stdout(formatWeather(weather));
-      progress.finish(message: formatWeather(weather));
-      finishProgress(progress);
-    } on Exception {
-      rethrow;
-    }
+    var weather = await getWeatherForCity(city);
+    progress.finish(message: "\n ${formatWeather(weather)}");
   }
 
   Future<List<Weather>> getWeatherForCity(String city);

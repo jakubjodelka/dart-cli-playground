@@ -6,10 +6,6 @@ import 'table.dart';
 
 Logger logger = Logger.standard();
 
-void finishProgress(Progress progress) {
-  progress.finish(showTiming: true);
-}
-
 String formatWeather(List<Weather> entries) {
   var table = Table();
 

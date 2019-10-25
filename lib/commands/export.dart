@@ -9,44 +9,52 @@ import 'package:io/ansi.dart';
 import 'package:mustache/mustache.dart';
 
 const TEMPLATE_FILE_NAME = "{{date}}.txt";
+const TEMPLATE_URL =
+    "https://gist.githubusercontent.com/jakubjodelka/9b69db1af7e100d06938864ec7174718/raw/f7083e704d36480a66a65f0deb1fb44f58ec2e7f/template.txt";
 
 class ExportCommand extends Command {
   final name = 'export';
   final description = 'Exports weather for today for given location';
-  final progressMessageSearchingWeather =
-      "Looking for weather for today for city:";
 
   void run() async {
-    if (argResults.arguments.isEmpty)
+    if (argResults.arguments.isEmpty) {
       throw Exception("City parameter is required");
+    }
 
     final city = argResults.arguments[0];
 
-    final progress =
-        logger.progress(green.wrap(progressMessageSearchingWeather + " $city"));
-
+    final weatherDownloadingProgress = logger
+        .progress(green.wrap("Looking for weather for today for city: $city"));
+    Weather weather;
     try {
-      var weather = await getWeatherForCity(city);
-      var templateFile = await http.get(
-          "https://gist.githubusercontent.com/jakubjodelka/9b69db1af7e100d06938864ec7174718/raw/1300002a5545f32a23e035ac5d4b0a36de240d4b/template.txt");
-      var templateFileContent = templateFile.body;
-      var templateFileNameRendered =
-          Template(TEMPLATE_FILE_NAME).renderString({"date": weather[0].date});
-      var templateFileContentRendered =
-          Template(templateFileContent).renderString({
-        "weather": {
-          "temp": weather[0].temp,
-          "minTemp": weather[0].minTemp,
-          "maxTemp": weather[0].maxTemp
-        }
-      });
-      var file = File(templateFileNameRendered);
-      await file.writeAsString(templateFileContentRendered);
-      progress.finish(message: formatWeather(weather));
-      finishProgress(progress);
-    } on Exception {
-      rethrow;
+      weather = (await getWeatherForCity(city))[0];
+      await Future.delayed(Duration(seconds: 3));
+    } catch (error) {
+      logger.trace(error.toString());
     }
+    weatherDownloadingProgress.finish();
+
+    final fileExportProgress =
+        logger.progress(green.wrap("Exporting weather to file"));
+    var templateFileContent = (await http.get(TEMPLATE_URL)).body;
+    var weatherDate = weather?.date ?? "0";
+
+    var templateFileNameRendered =
+        Template(TEMPLATE_FILE_NAME).renderString({"date": weatherDate});
+    var templateFileContentRendered =
+        Template(templateFileContent).renderString({
+      "weather": {
+        "temp": weather?.temp,
+        "minTemp": weather?.minTemp,
+        "maxTemp": weather?.maxTemp
+      },
+      "weatherDownloaded": weather?.temp != null
+    });
+
+    await File(templateFileNameRendered).writeAsString(templateFileContentRendered);
+    await Future.delayed(Duration(seconds: 3));
+    fileExportProgress.finish(
+        message: yellow.wrap("\nWeather for today for $city exported to file"));
   }
 
   Future<List<Weather>> getWeatherForCity(String city) async {

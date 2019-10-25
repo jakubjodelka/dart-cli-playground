@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:cli_util/cli_logging.dart';
 import 'package:dart_cli_playground/commands/export.dart';
+import 'package:dart_cli_playground/commands/hello.dart';
 import 'package:dart_cli_playground/commands/today.dart';
 import 'package:dart_cli_playground/commands/week.dart';
 import 'package:dart_cli_playground/utils/logger.dart' show logger;
@@ -13,7 +14,8 @@ Future<void> weatherRunner(List<String> args) async {
 
   runner.argParser.addFlag('verbose',
       abbr: 'v',
-      help: 'Print verbose output.', negatable: false, callback: (verbose) {
+      help: 'Print verbose output.',
+      negatable: false, callback: (verbose) {
     if (verbose) {
       logger = Logger.verbose();
     } else {
@@ -22,6 +24,7 @@ Future<void> weatherRunner(List<String> args) async {
     ;
   });
 
+  runner..addCommand(HelloCommand());
   runner..addCommand(TodayCommand());
   runner..addCommand(WeekCommand());
   runner..addCommand(ExportCommand());
@@ -30,10 +33,8 @@ Future<void> weatherRunner(List<String> args) async {
     if (exc is String) {
       logger.stdout(exc);
     } else {
-      logger.stderr("⚠️ ${yellow.wrap(exc?.message)}");
-      if (args.contains('--verbose')) {
-        logger.trace(st.toString());
-      }
+      logger.stderr("⚠️ ${yellow.wrap(exc?.message ?? "Error ocurred")}");
+      logger.trace(st.toString());
     }
     exitCode = 1;
   }).whenComplete(() {});
